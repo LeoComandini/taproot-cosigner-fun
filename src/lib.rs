@@ -30,7 +30,7 @@ pub fn rocket_launcher() -> _ {
 }
 
 fn read_xprv() -> Result<ExtendedPrivKey, Error> {
-    let filename = std::env::var("XPRV").unwrap_or("xprv.txt".to_string());
+    let filename = std::env::var("XPRV_FILENAME").unwrap_or("xprv.txt".to_string());
     let mut s = fs::read_to_string(&filename)?;
     if s.ends_with("\n") {
         s.pop();

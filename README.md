@@ -14,7 +14,7 @@ This project can be used to demo a Taproot key spend.
 
 ### Run the server
 
-    export XPRV=server-xprv-filename
+    export XPRV_FILENAME=server-xprv-filename
     cargo run
 
 Once the server is running, for instance you can get its xpub
