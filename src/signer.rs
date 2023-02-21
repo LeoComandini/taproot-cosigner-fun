@@ -26,18 +26,33 @@ pub struct Signer {
     client_xprv: ExtendedPrivKey,
     server_xpub: ExtendedPubKey,
     secp: Secp256k1<All>,
+    cosigner_url: String,
 }
 
 impl Signer {
     /// Create a new signer using a extended private key and fetching the server xpub from the
     /// server.
-    pub fn new(client_xprv: ExtendedPrivKey, apiclient: &ApiClient) -> Self {
+    #[cfg(test)]
+    pub fn new_test(client_xprv: ExtendedPrivKey, apiclient: &ApiClient) -> Self {
         let r = apiclient.get("/xpub").dispatch();
         let r: XpubResponse = r.into_json().unwrap();
         Self {
             client_xprv,
             server_xpub: r.xpub,
             secp: Secp256k1::new(),
+            cosigner_url: "".to_string(),
+        }
+    }
+
+    #[allow(unused)]
+    pub fn new(client_xprv: ExtendedPrivKey, cosigner_url: &str) -> Self {
+        let s = format!("{}/xpub", cosigner_url);
+        let r: XpubResponse = ureq::get(&s).call().unwrap().into_json().unwrap();
+        Self {
+            client_xprv,
+            server_xpub: r.xpub,
+            secp: Secp256k1::new(),
+            cosigner_url: cosigner_url.to_string(),
         }
     }
 
@@ -160,23 +175,27 @@ impl InputSigner for Signer {
             let sig_hash_bytes = sig_hash.into_inner();
             let message = Message::raw(&sig_hash_bytes[..]);
             let message_str = hex::encode(message.bytes.as_inner());
-
-            let apiclient = ApiClient::tracked(rocket_launcher()).unwrap();
             let req = SignRequest {
                 message: message_str.to_string(),
                 client_public_nonce,
                 client_pubkey: client_keypair.public_key(),
                 server_derivation_path: path.clone(),
             };
-            let req = serde_json::to_string(&req).unwrap();
-            let response = apiclient
-                .post("/sign")
-                .body(&req)
-                .header(ContentType::JSON)
-                .dispatch();
-            assert_eq!(response.status(), Status::Ok);
-            assert_eq!(response.content_type(), Some(ContentType::JSON));
-            let r: SignResponse = response.into_json().unwrap();
+            let r: SignResponse = if cfg!(test) {
+                let req = serde_json::to_string(&req).unwrap();
+                let apiclient = ApiClient::tracked(rocket_launcher()).unwrap();
+                let response = apiclient
+                    .post("/sign")
+                    .body(&req)
+                    .header(ContentType::JSON)
+                    .dispatch();
+                assert_eq!(response.status(), Status::Ok);
+                assert_eq!(response.content_type(), Some(ContentType::JSON));
+                response.into_json().unwrap()
+            } else {
+                let s = format!("{}/sign", self.cosigner_url);
+                ureq::post(&s).send_json(&req).unwrap().into_json().unwrap()
+            };
 
             let nonces = vec![client_public_nonce, r.server_public_nonce];
             let session = musig.start_sign_session(&agg_key, nonces, message);

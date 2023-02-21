@@ -2,7 +2,6 @@
 extern crate rocket;
 
 mod error;
-#[cfg(test)]
 pub mod signer;
 #[cfg(test)]
 pub mod util;
@@ -23,7 +22,6 @@ use schnorr_fun::{musig, Message};
 use std::fs;
 use std::str::FromStr;
 
-#[cfg(test)]
 #[launch]
 pub fn rocket_launcher() -> _ {
     rocket::build().mount("/", routes![xpub, sign])

@@ -139,7 +139,7 @@ fn test_tx() {
     let network = Network::Testnet;
     let client_xprv = ExtendedPrivKey::new_master(network, &seed).unwrap();
 
-    let signer = Signer::new(client_xprv, &apiclient);
+    let signer = Signer::new_test(client_xprv, &apiclient);
 
     let client_path: Vec<ChildNumber> = vec![];
     let server_path: Vec<ChildNumber> = vec![];
