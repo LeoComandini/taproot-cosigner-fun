@@ -5,6 +5,7 @@ edition = "2021"
 authors = ["Leonardo Comandini <leo@leocomandini.org>"]
 readme = "README.md"
 license = "MIT"
+default-run = "taproot-cosigner-fun"
 
 [dependencies]
 rocket = { version = "0.5.0-rc.2", features = ["json", "uuid"] }
@@ -17,7 +18,14 @@ rand_chacha = "0.3"
 rand = "0.8.5"
 thiserror = "1.0"
 hex = "0.4"
+clap = { version = "4", features = ["derive"] }
+base64 = { version = "0.13" }
+bdk = { version = "0.26", features = ["all-keys", "key-value-db", "electrum"] }
+ureq = { version = "2.6", features = ["json"] }
 
 [dev-dependencies]
-bdk = { version = "0.26", features = ["all-keys", "key-value-db", "electrum"] }
 electrsd = { version = "0.22", features = ["bitcoind_23_0", "esplora_a33e97e1", "legacy"] }
+
+[[bin]]
+name = "cli"
+path = "src/bin/cli.rs"
